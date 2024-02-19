@@ -1,17 +1,11 @@
 import GithubSvg from "../../public/github-mark.svg";
 import LogoutSvg from "../../public/logout.svg";
-import {
-    useSession,
-    signOut,
-    getSession,
-    getProviders,
-    signIn,
-} from "next-auth/react";
+import { useSession, signOut, getProviders, signIn } from "next-auth/react";
 import { useGetGithubActivity } from "@/hooks/useGetGithubActivity";
 import { randomString } from "@/utils/randomString";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import Image from "next/image";
-import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import { InferGetServerSidePropsType } from "next";
 
 const App = ({
     providers,
@@ -112,7 +106,7 @@ const App = ({
 
 export default App;
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
+export async function getServerSideProps() {
     // const session = await getSession(context);
 
     // // If the user is already logged in, redirect.
