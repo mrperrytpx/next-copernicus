@@ -31,8 +31,6 @@ export default async function handler(
 
         let commitsMap: { [key: string]: number[] } = {};
 
-        console.log(new Date("2024-01-01T15:00:00Z").getHours());
-
         for (let repo of reposData.items) {
             const commitsUrl = `https://api.github.com/repos/${user.username}/${repo.name}/commits`;
 
