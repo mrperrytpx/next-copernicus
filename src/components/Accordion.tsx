@@ -26,7 +26,7 @@ export const Accordion = ({ children, title }: IAccordionProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="mx-auto flex max-w-screen-xl flex-col  items-center justify-start bg-white">
+    <div className="mx-auto flex w-full max-w-screen-xl flex-col items-center justify-start bg-white lg:w-auto">
       <div
         onClick={() => setIsExpanded(!isExpanded)}
         tabIndex={0}
