@@ -20,8 +20,6 @@ export default async function handler(
 
         if (!user) return res.status(401).end("You must be logged in");
 
-        let hours = new Array(24).fill(0);
-
         const allReposLink = `https://api.github.com/search/repositories?q=user:${user.username}`;
 
         const response = await fetch(allReposLink, {
@@ -30,6 +28,8 @@ export default async function handler(
             },
         });
         const reposData: AllReposData = await response.json();
+
+        let commitsMap: { [key: string]: number[] } = {};
 
         for (let repo of reposData.items) {
             const commitsUrl = `https://api.github.com/repos/${user.username}/${repo.name}/commits`;
@@ -43,11 +43,19 @@ export default async function handler(
 
             for (let commitData of allCommitsData) {
                 const hour = new Date(commitData.commit.author.date).getHours();
+                const year = new Date(
+                    commitData.commit.author.date
+                ).getFullYear();
 
-                hours[hour] = hours[hour] + 1;
+                if (commitsMap[year]) {
+                    commitsMap[year][hour] = commitsMap[year][hour] + 1;
+                } else {
+                    commitsMap[year] = new Array(24).fill(0);
+                    commitsMap[year][hour] = commitsMap[year][hour] + 1;
+                }
             }
         }
 
-        return res.status(200).json(hours);
+        return res.status(200).json(commitsMap);
     }
 }

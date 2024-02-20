@@ -1,22 +1,19 @@
 import GithubSvg from "../../public/github-mark.svg";
 import LogoutSvg from "../../public/logout.svg";
 import { useSession, signOut, getProviders, signIn } from "next-auth/react";
-import { useGetGithubActivity } from "@/hooks/useGetGithubActivity";
-import { randomString } from "@/utils/randomString";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
 import Image from "next/image";
 import { InferGetServerSidePropsType } from "next";
+import { Plots } from "@/components/Plots";
 
 const App = ({
     providers,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
     const session = useSession();
-    const repos = useGetGithubActivity();
 
     const allProviders = Object.values(providers);
 
     return (
-        <div className="flex lg:h-full min-h-full flex-col px-12 py-6 gap-16">
+        <div className="flex min-h-full flex-col px-12 py-6 gap-16">
             {!session.data?.user.id &&
                 allProviders.map((provider) => (
                     <button
@@ -62,44 +59,7 @@ const App = ({
                     </button>
                 </div>
             )}
-            {repos.isLoading ? (
-                <div className="text-center space-y-4">
-                    <p className="inline">Might take a bit...</p>
-                    <LoadingSpinner />
-                </div>
-            ) : (
-                <div className="lg:h-[min(95%,24rem)] justify-center flex-col lg:flex-row flex gap-2">
-                    {repos.data?.map((x, i) => (
-                        <div
-                            className="lg:w-8 h-8 lg:h-full relative"
-                            key={randomString(6)}
-                        >
-                            <div
-                                className="border border-black rounded-t-md absolute hidden lg:block text-center bg-yellow-200 hover:bg-yellow-300 top-auto transition-color duration-75 bottom-0 left-0 right-0"
-                                style={{
-                                    height: `${
-                                        (x / Math.max(...repos.data)) * 100
-                                    }%`,
-                                }}
-                            />
-                            <div
-                                className="border border-black rounded-r-md absolute lg:hidden text-center bg-yellow-200 hover:bg-yellow-300 transition-color duration-75 bottom-0 left-0 top-0"
-                                style={{
-                                    width: `${
-                                        (x / Math.max(...repos.data)) * 100
-                                    }%`,
-                                }}
-                            />
-                            <p className="absolute font-medium -left-6 top-0 bottom-0 lg:bottom-auto lg:-top-7 text-center lg:left-0 lg:right-0">
-                                {i}
-                            </p>
-                            <p className="absolute z-50 font-medium -right-6 top-0 bottom-0 lg:top-auto lg:-bottom-6 text-center lg:left-0 lg:right-0">
-                                {x}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            )}
+            <Plots />
         </div>
     );
 };

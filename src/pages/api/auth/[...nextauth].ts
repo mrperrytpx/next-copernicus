@@ -35,6 +35,12 @@ export const authOptions: AuthOptions = {
                     accessToken: tokens.access_token,
                 };
             },
+            authorization: {
+                params: {
+                    // @ts-ignore
+                    scope: ["user", "repo"],
+                },
+            },
         }),
     ],
     callbacks: {

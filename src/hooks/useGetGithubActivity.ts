@@ -7,7 +7,7 @@ export const useGetGithubActivity = () => {
     const fetchActivity = async () => {
         const response = await fetch("/api/github/all-repositories");
         const data = await response.json();
-        return data as number[];
+        return data as { [key: string]: number[] };
     };
 
     return useQuery({
