@@ -59,7 +59,7 @@ export default async function handler(
         if (process.env.NODE_ENV === "production") {
             for (let year in commitsMap) {
                 commitsMap[year] = [
-                    ...commitsMap[year].slice(1),
+                    ...commitsMap[year].slice(+!timezone),
                     commitsMap[year][0],
                 ];
             }
