@@ -19,7 +19,7 @@ export default function App({
                         retry: 0,
                     },
                 },
-            })
+            }),
     );
 
     return (

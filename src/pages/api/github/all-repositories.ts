@@ -6,7 +6,7 @@ import { AllReposData, CommitData } from "@/types/github";
 
 export default async function handler(
     req: NextApiRequest,
-    res: NextApiResponse
+    res: NextApiResponse,
 ) {
     if (req.method === "GET") {
         const session = await getServerSession(req, res, authOptions);
@@ -31,6 +31,8 @@ export default async function handler(
 
         let commitsMap: { [key: string]: number[] } = {};
 
+        let midnights = 0;
+
         for (let repo of reposData.items) {
             const commitsUrl = `https://api.github.com/repos/${user.username}/${repo.name}/commits`;
 
@@ -44,8 +46,12 @@ export default async function handler(
             for (let commitData of allCommitsData) {
                 const hour = new Date(commitData.commit.author.date).getHours();
                 const year = new Date(
-                    commitData.commit.author.date
+                    commitData.commit.author.date,
                 ).getFullYear();
+
+                // console.log(hour, year);
+
+                if (hour === 0) midnights++;
 
                 if (commitsMap[year]) {
                     commitsMap[year][hour] = commitsMap[year][hour] + 1;
@@ -55,6 +61,8 @@ export default async function handler(
                 }
             }
         }
+
+        console.log(midnights);
 
         return res.status(200).json(commitsMap);
     }
