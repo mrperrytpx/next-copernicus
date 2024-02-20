@@ -49,8 +49,6 @@ export default async function handler(
                     commitData.commit.author.date,
                 ).getFullYear();
 
-                // console.log(hour, year);
-
                 if (hour === 0) midnights++;
 
                 if (commitsMap[year]) {
@@ -62,7 +60,7 @@ export default async function handler(
             }
         }
 
-        console.log(midnights);
+        console.log("commits", commitsMap);
 
         return res.status(200).json(commitsMap);
     }
