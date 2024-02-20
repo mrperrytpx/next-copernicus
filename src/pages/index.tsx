@@ -36,6 +36,7 @@ const App = ({
                         </span>
                     </button>
                 ))}
+
             {session?.data?.user.id && (
                 <div className="flex select-none items-center justify-center gap-2 self-center border-b-2  border-black px-4 text-sm text-black transition-all duration-75">
                     <div className="p-2">

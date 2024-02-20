@@ -17,11 +17,11 @@ export default async function handler(
                 id: session.user.id,
             },
         });
-
         if (!user) return res.status(401).end("You must be logged in");
 
-        const allReposLink = `https://api.github.com/search/repositories?q=user:${user.username}`;
+        const { timezone } = req.query;
 
+        const allReposLink = `https://api.github.com/search/repositories?q=user:${user.username}`;
         const response = await fetch(allReposLink, {
             headers: {
                 Authorization: `token ${user.accessToken}`,
@@ -53,6 +53,15 @@ export default async function handler(
                     commitsMap[year] = new Array(24).fill(0);
                     commitsMap[year][hour] = commitsMap[year][hour] + 1;
                 }
+            }
+        }
+
+        if (process.env.NODE_ENV === "production") {
+            for (let year in commitsMap) {
+                commitsMap[year] = [
+                    ...commitsMap[year].slice(1),
+                    commitsMap[year][0],
+                ];
             }
         }
 

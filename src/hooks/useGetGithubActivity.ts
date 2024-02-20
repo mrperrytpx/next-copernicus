@@ -5,7 +5,11 @@ export const useGetGithubActivity = () => {
     const session = useSession();
 
     const fetchActivity = async () => {
-        const response = await fetch("/api/github/all-repositories");
+        const userTimezone = (new Date().getTimezoneOffset() / 60) * -1;
+
+        const response = await fetch(
+            `/api/github/all-repositories?timezone=${userTimezone}`,
+        );
         const data = await response.json();
         return data as { [key: string]: number[] };
     };
