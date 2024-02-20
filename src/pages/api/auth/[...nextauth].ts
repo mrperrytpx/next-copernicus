@@ -38,7 +38,7 @@ export const authOptions: AuthOptions = {
             authorization: {
                 params: {
                     // @ts-ignore
-                    scope: ["user", "repo"],
+                    scope: ["repo"],
                 },
             },
         }),
