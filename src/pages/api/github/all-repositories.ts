@@ -41,12 +41,10 @@ export default async function handler(
         timezone = +timezone;
         if (!timezone) timezone = 0;
 
-        console.log("timezone", timezone);
-
         const allReposLink = `https://api.github.com/search/repositories?q=user:${user.username}`;
         const response = await fetch(allReposLink, {
             headers: {
-                Authorization: `token ${user.accessToken}`,
+                Authorization: `Bearer ${user.accessToken}`,
             },
         });
         const reposData: AllReposData = await response.json();
@@ -54,14 +52,47 @@ export default async function handler(
         let commitsMap: { [key: string]: number[] } = {};
 
         for (let repo of reposData.items) {
-            const commitsUrl = `https://api.github.com/repos/${user.username}/${repo.name}/commits`;
+            let page = 1;
+            let totalPages = 0;
+            let allCommitsData: CommitData[] = [];
+
+            const commitsUrl = `https://api.github.com/repos/${user.username}/${repo.name}/commits?per_page=100&page=${page}`;
 
             const response = await fetch(commitsUrl, {
                 headers: {
-                    Authorization: `token ${user.accessToken}`,
+                    Authorization: `Bearer ${user.accessToken}`,
                 },
             });
-            const allCommitsData: CommitData[] = await response.json();
+
+            if (response.headers.has("link")) {
+                // @ts-ignore
+                let responseLinks = [response.headers.get("link")][0]
+                    .split(",")
+                    .map((v) => v.trimStart());
+
+                totalPages = +responseLinks[responseLinks.length - 1]
+                    .split("&page=")[1]
+                    .split(">; ")[0];
+            }
+
+            const pageOfCommitData: CommitData[] = await response.json();
+            allCommitsData.push(...pageOfCommitData);
+
+            if (totalPages >= 2) {
+                for (let i = 2; i <= totalPages; i++) {
+                    const commitsUrl = `https://api.github.com/repos/${user.username}/${repo.name}/commits?per_page=100&page=${i}`;
+
+                    const response = await fetch(commitsUrl, {
+                        headers: {
+                            Authorization: `Bearer ${user.accessToken}`,
+                        },
+                    });
+
+                    const pageOfCommitData: CommitData[] =
+                        await response.json();
+                    allCommitsData.push(...pageOfCommitData);
+                }
+            }
 
             for (let commitData of allCommitsData) {
                 const hour = new Date(commitData.commit.author.date).getHours();

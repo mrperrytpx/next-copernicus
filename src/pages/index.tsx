@@ -19,7 +19,7 @@ const App = ({
                     <button
                         aria-label={`${provider.name} sign in.`}
                         key={provider.id}
-                        className="group mb-2 flex h-[2.5rem] w-full items-center justify-center gap-2 rounded-lg bg-white text-sm transition-all duration-75 "
+                        className="group mx-auto mb-2 flex h-[2.5rem] w-full max-w-[200px] items-center justify-center gap-2 rounded-lg bg-white text-sm transition-all duration-75 "
                         onClick={() => signIn(provider.id)}
                     >
                         <div className="rounded-sm bg-white p-2">

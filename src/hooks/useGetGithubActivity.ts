@@ -18,5 +18,6 @@ export const useGetGithubActivity = () => {
         queryKey: ["github-repos"],
         queryFn: fetchActivity,
         enabled: !!session?.data?.user.id,
+        staleTime: Infinity,
     });
 };
