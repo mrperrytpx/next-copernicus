@@ -4,6 +4,24 @@ import { authOptions } from "../auth/[...nextauth]";
 import { prisma } from "../../../../prisma";
 import { AllReposData, CommitData } from "@/types/github";
 
+function shiftArray(arr: number[], steps: number) {
+    const length = arr.length;
+
+    if (steps < 0) {
+        steps *= -1;
+        const leftShifted = arr
+            .slice(steps % length)
+            .concat(arr.slice(0, steps % length));
+        return leftShifted;
+    } else {
+        if (steps === 0) return arr;
+        const rightShifted = arr
+            .slice(length - (steps % length))
+            .concat(arr.slice(0, length - (steps % length)));
+        return rightShifted;
+    }
+}
+
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse,
@@ -20,6 +38,8 @@ export default async function handler(
         if (!user) return res.status(401).end("You must be logged in");
 
         const { timezone } = req.query;
+
+        console.log("timezone", timezone);
 
         const allReposLink = `https://api.github.com/search/repositories?q=user:${user.username}`;
         const response = await fetch(allReposLink, {
@@ -58,10 +78,7 @@ export default async function handler(
 
         if (process.env.NODE_ENV === "production") {
             for (let year in commitsMap) {
-                commitsMap[year] = [
-                    ...commitsMap[year].slice(+!timezone),
-                    commitsMap[year][0],
-                ];
+                commitsMap[year] = shiftArray(commitsMap[year], +!timezone);
             }
         }
 
