@@ -37,7 +37,9 @@ export default async function handler(
         });
         if (!user) return res.status(401).end("You must be logged in");
 
-        const { timezone } = req.query;
+        let { timezone } = req.query as { timezone: string | number };
+        timezone = +timezone;
+        if (!timezone) timezone = 0;
 
         console.log("timezone", timezone);
 
@@ -78,7 +80,8 @@ export default async function handler(
 
         if (process.env.NODE_ENV === "production") {
             for (let year in commitsMap) {
-                commitsMap[year] = shiftArray(commitsMap[year], +!timezone);
+                const newArr = shiftArray(commitsMap[year], timezone);
+                commitsMap[year] = [...newArr];
             }
         }
 
