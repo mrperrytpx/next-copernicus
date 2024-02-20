@@ -120,7 +120,9 @@ export default async function handler(
             }
 
             return res.status(200).json(commitsMap);
-        } catch (error) {}
+        } catch (error) {
+            return res.status(500).end("Something went wrong...");
+        }
     } else {
         res.setHeader("Allow", "GET");
         res.status(405).end("Method Not Allowed");
