@@ -1,16 +1,28 @@
 import GithubSvg from "../../public/github-mark.svg";
 import LogoutSvg from "../../public/logout.svg";
-import { useSession, signOut, getProviders, signIn } from "next-auth/react";
+import { useSession, getProviders, signIn } from "next-auth/react";
 import Image from "next/image";
 import { InferGetServerSidePropsType } from "next";
 import { Plots } from "@/components/Plots";
+import { useDeleteUserMutation } from "@/hooks/useDeleteUserMutation";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/router";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 const App = ({
     providers,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
     const session = useSession();
-
+    const queryClient = useQueryClient();
     const allProviders = Object.values(providers);
+    const deleteMutation = useDeleteUserMutation();
+    const router = useRouter();
+
+    const deleteUser = async () => {
+        await deleteMutation.mutateAsync();
+        queryClient.clear();
+        router.reload();
+    };
 
     return (
         <div className="flex min-h-full flex-col gap-16 px-6 py-6 lg:px-12">
@@ -51,13 +63,22 @@ const App = ({
                     <span className="pr-2 font-medium">
                         {session.data.user.username}
                     </span>
-                    <button title="Logout" onClick={() => signOut()}>
-                        <Image
-                            src={LogoutSvg}
-                            className="w-[2.5rem] p-2"
-                            alt="Logout button"
-                        />
-                    </button>
+                    {deleteMutation.isPending ? (
+                        <LoadingSpinner />
+                    ) : (
+                        <button
+                            disabled={deleteMutation.isPending}
+                            title="Logout"
+                            onClick={() => deleteUser()}
+                            aria-label="Logout"
+                        >
+                            <Image
+                                src={LogoutSvg}
+                                className="w-[2.5rem] p-2"
+                                alt="Logout button"
+                            />
+                        </button>
+                    )}
                 </div>
             )}
             <Plots />

@@ -27,95 +27,102 @@ export default async function handler(
     res: NextApiResponse,
 ) {
     if (req.method === "GET") {
-        const session = await getServerSession(req, res, authOptions);
-        if (!session) return res.status(401).end("No session!");
+        try {
+            const session = await getServerSession(req, res, authOptions);
+            if (!session) return res.status(401).end("No session!");
 
-        const user = await prisma.user.findFirst({
-            where: {
-                id: session.user.id,
-            },
-        });
-        if (!user) return res.status(401).end("You must be logged in");
+            const user = await prisma.user.findFirst({
+                where: {
+                    id: session.user.id,
+                },
+            });
+            if (!user) return res.status(401).end("You must be logged in");
 
-        let { timezone } = req.query as { timezone: string | number };
-        timezone = +timezone;
-        if (!timezone) timezone = 0;
+            let { timezone } = req.query as { timezone: string | number };
+            timezone = +timezone;
+            if (!timezone) timezone = 0;
 
-        const allReposLink = `https://api.github.com/search/repositories?q=user:${user.username}`;
-        const response = await fetch(allReposLink, {
-            headers: {
-                Authorization: `Bearer ${user.accessToken}`,
-            },
-        });
-        const reposData: AllReposData = await response.json();
-
-        let commitsMap: { [key: string]: number[] } = {};
-
-        for (let repo of reposData.items) {
-            let page = 1;
-            let totalPages = 0;
-            let allCommitsData: CommitData[] = [];
-
-            const commitsUrl = `https://api.github.com/repos/${user.username}/${repo.name}/commits?per_page=100&page=${page}`;
-
-            const response = await fetch(commitsUrl, {
+            const allReposLink = `https://api.github.com/search/repositories?q=user:${user.username}`;
+            const response = await fetch(allReposLink, {
                 headers: {
                     Authorization: `Bearer ${user.accessToken}`,
                 },
             });
+            const reposData: AllReposData = await response.json();
 
-            if (response.headers.has("link")) {
-                // @ts-ignore
-                let responseLinks = [response.headers.get("link")][0]
-                    .split(",")
-                    .map((v) => v.trimStart());
+            let commitsMap: { [key: string]: number[] } = {};
 
-                totalPages = +responseLinks[responseLinks.length - 1]
-                    .split("&page=")[1]
-                    .split(">; ")[0];
-            }
+            for (let repo of reposData.items) {
+                let page = 1;
+                let totalPages = 0;
+                let allCommitsData: CommitData[] = [];
 
-            const pageOfCommitData: CommitData[] = await response.json();
-            allCommitsData.push(...pageOfCommitData);
+                const commitsUrl = `https://api.github.com/repos/${user.username}/${repo.name}/commits?per_page=100&page=${page}`;
 
-            if (totalPages >= 2) {
-                for (let i = 2; i <= totalPages; i++) {
-                    const commitsUrl = `https://api.github.com/repos/${user.username}/${repo.name}/commits?per_page=100&page=${i}`;
+                const response = await fetch(commitsUrl, {
+                    headers: {
+                        Authorization: `Bearer ${user.accessToken}`,
+                    },
+                });
 
-                    const response = await fetch(commitsUrl, {
-                        headers: {
-                            Authorization: `Bearer ${user.accessToken}`,
-                        },
-                    });
+                if (response.headers.has("link")) {
+                    // @ts-ignore
+                    let responseLinks = [response.headers.get("link")][0]
+                        .split(",")
+                        .map((v) => v.trimStart());
 
-                    const pageOfCommitData: CommitData[] =
-                        await response.json();
-                    allCommitsData.push(...pageOfCommitData);
+                    totalPages = +responseLinks[responseLinks.length - 1]
+                        .split("&page=")[1]
+                        .split(">; ")[0];
+                }
+
+                const pageOfCommitData: CommitData[] = await response.json();
+                allCommitsData.push(...pageOfCommitData);
+
+                if (totalPages >= 2) {
+                    for (let i = 2; i <= totalPages; i++) {
+                        const commitsUrl = `https://api.github.com/repos/${user.username}/${repo.name}/commits?per_page=100&page=${i}`;
+
+                        const response = await fetch(commitsUrl, {
+                            headers: {
+                                Authorization: `Bearer ${user.accessToken}`,
+                            },
+                        });
+
+                        const pageOfCommitData: CommitData[] =
+                            await response.json();
+                        allCommitsData.push(...pageOfCommitData);
+                    }
+                }
+
+                for (let commitData of allCommitsData) {
+                    const hour = new Date(
+                        commitData.commit.author.date,
+                    ).getHours();
+                    const year = new Date(
+                        commitData.commit.author.date,
+                    ).getFullYear();
+
+                    if (commitsMap[year]) {
+                        commitsMap[year][hour] = commitsMap[year][hour] + 1;
+                    } else {
+                        commitsMap[year] = new Array(24).fill(0);
+                        commitsMap[year][hour] = commitsMap[year][hour] + 1;
+                    }
                 }
             }
 
-            for (let commitData of allCommitsData) {
-                const hour = new Date(commitData.commit.author.date).getHours();
-                const year = new Date(
-                    commitData.commit.author.date,
-                ).getFullYear();
-
-                if (commitsMap[year]) {
-                    commitsMap[year][hour] = commitsMap[year][hour] + 1;
-                } else {
-                    commitsMap[year] = new Array(24).fill(0);
-                    commitsMap[year][hour] = commitsMap[year][hour] + 1;
+            if (process.env.NODE_ENV === "production") {
+                for (let year in commitsMap) {
+                    const newArr = shiftArray(commitsMap[year], timezone);
+                    commitsMap[year] = [...newArr];
                 }
             }
-        }
 
-        if (process.env.NODE_ENV === "production") {
-            for (let year in commitsMap) {
-                const newArr = shiftArray(commitsMap[year], timezone);
-                commitsMap[year] = [...newArr];
-            }
-        }
-
-        return res.status(200).json(commitsMap);
+            return res.status(200).json(commitsMap);
+        } catch (error) {}
+    } else {
+        res.setHeader("Allow", "GET");
+        res.status(405).end("Method Not Allowed");
     }
 }
